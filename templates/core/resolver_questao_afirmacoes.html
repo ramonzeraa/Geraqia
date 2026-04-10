@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Resolver Questão de Afirmações{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Questão de Afirmações</h4>
+                    <div>
+                        <span class="badge bg-primary">{{ questao.disciplina.nome }}</span>
+                        <span class="badge bg-secondary">{{ questao.get_nivel_dificuldade_display }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Enunciado -->
+                        <div class="mb-4">
+                            <h5>{{ questao.enunciado }}</h5>
+                        </div>
+                        
+                        <!-- Afirmações -->
+                        <div class="mb-4">
+                            {% if questao.tipo == 'verdadeiro_falso' %}
+                                <h6 class="text-muted">{{ questao.instrucao_vf|default:"a sequência correta obtida no sentido de cima para baixo" }}</h6>
+                            {% else %}
+                                <h6 class="text-muted">{{ instrucao_display }}</h6>
+                            {% endif %}
+                            
+                            
+                            <div class="list-group">
+                                {% for key, afirmacao in afirmacoes_display.items %}
+                                <div class="list-group-item">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <strong>{{ key }}.</strong>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            {{ afirmacao }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="list-group-item text-danger">
+                                    <strong>ERRO:</strong> Nenhuma afirmação encontrada!
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Alternativas -->
+                        <div class="mb-4">
+                            <h6>Selecione a resposta correta:</h6>
+                            <div class="list-group">
+                                {% for key, alternativa in alternativas_display.items %}
+                                <label class="list-group-item list-group-item-action">
+                                    <input type="radio" name="resposta" value="{{ key }}" class="form-check-input me-2">
+                                    <strong>{{ key }})</strong> {{ alternativa }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                {% if proxima_questao %}
+                                <a href="{% url 'core:resolver_questao' proxima_questao.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-skip-forward"></i> Pular Questão
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check"></i> Responder
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Informações da questão -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Total de Tentativas</h6>
+                            <h4 class="text-primary">{{ questao.total_tentativas }}</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Taxa de Acerto</h6>
+                            <h4 class="text-success">{{ questao.taxa_acerto }}%</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Total de Acertos</h6>
+                            <h4 class="text-info">{{ questao.total_acertos }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+.list-group-item input[type="radio"]:checked + strong {
+    color: #0d6efd;
+}
+
+.list-group-item:has(input[type="radio"]:checked) {
+    background-color: #e7f3ff;
+    border-color: #0d6efd;
+}
+</style>
+{% endblock %}

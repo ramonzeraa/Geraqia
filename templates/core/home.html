@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Início - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white rounded p-5 mb-4">
+            <h1 class="display-4">Bem-vindo ao Questões IA!</h1>
+            <p class="lead">Sistema inteligente para geração de questões no padrão IDECAN a partir dos seus PDFs de estudo.</p>
+            {% if not user.is_authenticated %}
+                <a class="btn btn-light btn-lg" href="{% url 'admin:login' %}" role="button">
+                    <i class="bi bi-box-arrow-in-right"></i> Fazer Login
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<!-- Estatísticas Rápidas -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card stats-card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-question-circle text-primary" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">Total de Questões</h5>
+                <p class="display-6 text-primary">{{ total_questoes }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">Tentativas</h5>
+                <p class="display-6 text-success">{{ total_tentativas }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">Acertos</h5>
+                <p class="display-6 text-warning">{{ total_acertos }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-graph-up text-info" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">Taxa de Acerto</h5>
+                <p class="display-6 text-info">{{ taxa_acerto_geral }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row g-4 mb-5">
+    <div class="col-12">
+        <h3 class="mb-3">Ações Rápidas</h3>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-upload text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Enviar PDF</h5>
+                <p class="card-text">Faça upload de um PDF para gerar questões personalizadas.</p>
+                <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Enviar Agora
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-list-ul text-success" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Ver Questões</h5>
+                <p class="card-text">Explore e responda questões geradas pelo sistema.</p>
+                <a href="{% url 'core:listar_questoes' %}" class="btn btn-success">
+                    <i class="bi bi-list-ul"></i> Ver Questões
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up text-info" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Dashboard</h5>
+                <p class="card-text">Acompanhe seu progresso e estatísticas detalhadas.</p>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-info">
+                    <i class="bi bi-graph-up"></i> Ver Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ranking de Disciplinas -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-3">Ranking de Disciplinas</h3>
+        <div class="card">
+            <div class="card-body">
+                {% if ranking_disciplinas %}
+                    <div class="list-group list-group-flush">
+                        {% for est in ranking_disciplinas %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <h6 class="mb-1">{{ est.disciplina.nome }}</h6>
+                                        <small class="text-muted">{{ est.total_acertos }}/{{ est.total_questoes_tentadas }} acertos</small>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill fs-6">{{ est.pontos_totais }} pts</span>
+                                </div>
+                                {% if est.materias %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">Matérias:</small>
+                                        <div class="mt-1">
+                                            {% for materia in est.materias %}
+                                                <span class="badge bg-light text-dark me-1 mb-1">{{ materia }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Nenhuma disciplina com dados ainda.</p>
+                        <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">Começar enviando um PDF</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Página para usuários não logados -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+            <h4 class="mt-2">Faça login para começar</h4>
+            <p>Use as credenciais: <strong>admin</strong> / <strong>admin</strong></p>
+            <a class="btn btn-primary btn-lg" href="{% url 'admin:login' %}">
+                <i class="bi bi-box-arrow-in-right"></i> Fazer Login
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

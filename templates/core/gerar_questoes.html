@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerar Questões - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-magic"></i> Gerar Questões com IA
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Informações do PDF -->
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-file-pdf"></i> PDF Selecionado
+                    </h6>
+                    <p class="mb-0">
+                        <strong>{{ pdf_doc.titulo }}</strong>
+                        {% if pdf_doc.disciplina %} - {{ pdf_doc.disciplina.nome }}{% endif %}
+                        {% if pdf_doc.materia %} - {{ pdf_doc.materia }}{% endif %}
+                    </p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="id_disciplina" class="form-label">
+                                <i class="bi bi-book"></i> Disciplina
+                            </label>
+                            <select name="disciplina" id="id_disciplina" class="form-select" onchange="carregarTopicos()" required>
+                                <option value="">Selecione uma disciplina</option>
+                                {% for d in disciplinas %}
+                                    <option value="{{ d.id }}" {% if pdf_doc.disciplina and d.id == pdf_doc.disciplina.id %}selected{% endif %}>
+                                        {{ d.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_topico" class="form-label">
+                                <i class="bi bi-tags"></i> Tópico (opcional)
+                            </label>
+                            <select name="topico" id="id_topico" class="form-select">
+                                <option value="">Selecione um tópico (opcional)</option>
+                                {% for t in topicos %}
+                                    <option value="{{ t.id }}">{{ t.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_nivel" class="form-label">
+                                <i class="bi bi-speedometer2"></i> Nível de Dificuldade
+                            </label>
+                            <select name="nivel_dificuldade" id="id_nivel" class="form-select" required>
+                                {% for k, v in niveis_dificuldade.items %}
+                                    <option value="{{ k }}">{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_quantidade" class="form-label">
+                                <i class="bi bi-hash"></i> Quantidade de Questões
+                            </label>
+                            <input type="number" name="quantidade" id="id_quantidade" class="form-control" min="1" max="20" value="5" required />
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">
+                                <i class="bi bi-list-check"></i> Tipos de Questões
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="tipos_questoes" value="multipla_escolha" id="id_multipla_escolha" {% if 'multipla_escolha' in tipos_questoes_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_multipla_escolha">
+                                            Múltipla Escolha
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="tipos_questoes" value="certo_errado" id="id_certo_errado" {% if 'certo_errado' in tipos_questoes_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_certo_errado">
+                                            Certo/Errado
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="tipos_questoes" value="afirmacoes" id="id_afirmacoes" {% if 'afirmacoes' in tipos_questoes_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_afirmacoes">
+                                            Afirmações
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="tipos_questoes" value="afirmacoes_variadas" id="id_afirmacoes_variadas" {% if 'afirmacoes_variadas' in tipos_questoes_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_afirmacoes_variadas">
+                                            Afirmações com Alternativas Variadas
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="tipos_questoes" value="verdadeiro_falso" id="id_verdadeiro_falso" {% if 'verdadeiro_falso' in tipos_questoes_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label" for="id_verdadeiro_falso">
+                                            Verdadeiro ou Falso com Sequência
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                Selecione os tipos de questões que deseja gerar. A quantidade será distribuída igualmente entre os tipos selecionados.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'core:home' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <button class="btn btn-success" type="submit">
+                            <i class="bi bi-magic"></i> Gerar Questões
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Aviso sobre limites da API -->
+        <div class="alert alert-warning mt-4">
+            <h6 class="alert-heading">
+                <i class="bi bi-exclamation-triangle"></i> Limites da API
+            </h6>
+            <p class="mb-2">
+                <strong>Dica:</strong> Para evitar atingir os limites da cota gratuita, recomendamos:
+            </p>
+            <ul class="mb-0">
+                <li>Gerar poucas questões por vez (1-3 questões)</li>
+                <li>Usar PDFs menores (até 4 páginas)</li>
+                <li>Evitar muitas gerações no mesmo dia</li>
+            </ul>
+        </div>
+
+        <!-- Informações sobre níveis -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Níveis de Dificuldade
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Fixação</h6>
+                        <p class="small text-muted">Conteúdo direto do PDF, memorização e compreensão básica.</p>
+                        
+                        <h6 class="text-warning">Médio</h6>
+                        <p class="small text-muted">Aplicação de lógica e raciocínio baseado no conteúdo.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">Difícil</h6>
+                        <p class="small text-muted">Lógica + raciocínio + análise crítica complexa.</p>
+                        
+                        <h6 class="text-dark">Nível da Banca</h6>
+                        <p class="small text-muted">Questões reais de concurso com pegadinhas típicas do IDECAN.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function carregarTopicos() {
+    const disciplinaId = document.getElementById('id_disciplina').value;
+    if (!disciplinaId) {
+        document.getElementById('id_topico').innerHTML = '<option value="">Selecione um tópico (opcional)</option>';
+        return;
+    }
+    
+    try {
+        const resp = await fetch(`/ajax/buscar-topicos/?disciplina_id=${disciplinaId}`);
+        const data = await resp.json();
+        const select = document.getElementById('id_topico');
+        select.innerHTML = '<option value="">Selecione um tópico (opcional)</option>';
+        data.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.nome;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Erro ao carregar tópicos:', error);
+    }
+}
+</script>
+{% endblock %}

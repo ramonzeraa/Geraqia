@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-graph-up"></i> Dashboard de Performance</h2>
+            <div class="d-flex gap-2">
+                <a href="{% url 'core:listar_questoes' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-list-ul"></i> Ver Questões
+                </a>
+                <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nova Questão
+                </a>
+            </div>
+        </div>
+        
+        <!-- Filtros de Data -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-range"></i> Filtros de Período
+                </h5>
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="data_inicio" class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
+                               value="{{ data_inicio }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="data_fim" class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="data_fim" name="data_fim" 
+                               value="{{ data_fim }}">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Resetar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas Gerais -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ total_questoes|default:0 }}</h4>
+                                <p class="card-text">Total de Questões</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-question-circle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ total_tentativas|default:0 }}</h4>
+                                <p class="card-text">Tentativas</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-check-circle fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ total_acertos|default:0 }}</h4>
+                                <p class="card-text">Acertos</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-trophy fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ taxa_acerto|default:0 }}%</h4>
+                                <p class="card-text">Taxa de Acerto</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-graph-up fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Principais -->
+        <div class="row mb-4">
+            <!-- Gráfico de Performance por Disciplina -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-bar-chart"></i> Performance por Disciplina
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if estatisticas_disciplinas %}
+                            <canvas id="performanceDisciplinasChart" height="300"></canvas>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-graph-down fs-1"></i>
+                                <h6 class="mt-3">Nenhum dado de performance</h6>
+                                <p class="mb-0">Comece a resolver questões para ver os gráficos!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Evolução Temporal -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up"></i> Evolução do Progresso (30 dias)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if total_tentativas > 0 %}
+                            <canvas id="evolucaoTemporalChart" height="300"></canvas>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-calendar-x fs-1"></i>
+                                <h6 class="mt-3">Nenhuma evolução registrada</h6>
+                                <p class="mb-0">Resolva questões para acompanhar seu progresso!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Secundários -->
+        <div class="row mb-4">
+            <!-- Gráfico de Acertos vs Erros -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-pie-chart"></i> Distribuição Acertos/Erros por Disciplina
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if estatisticas_disciplinas %}
+                            <canvas id="acertosErrosChart" height="300"></canvas>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-pie-chart fs-1"></i>
+                                <h6 class="mt-3">Nenhuma distribuição</h6>
+                                <p class="mb-0">Resolva questões para ver a distribuição!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Performance por Matéria -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-book"></i> Top 10 Matérias Mais Estudadas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if materias_performance %}
+                            <canvas id="materiasChart" height="300"></canvas>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-book fs-1"></i>
+                                <h6 class="mt-3">Nenhuma matéria estudada</h6>
+                                <p class="mb-0">Comece a estudar para ver as matérias!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas Hierárquicas -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-diagram-3"></i> Estatísticas Hierárquicas - Disciplinas e Matérias
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if estatisticas_hierarquicas %}
+                            {% for disciplina in estatisticas_hierarquicas %}
+                                <!-- Disciplina (H1) -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h1 class="h3 text-primary mb-0">
+                                            <i class="bi bi-book"></i> {{ disciplina.disciplina_nome }}
+                                        </h1>
+                                        <div class="d-flex gap-3">
+                                            <span class="badge bg-secondary fs-6">Peso: {{ disciplina.peso }}x</span>
+                                            <span class="badge bg-info fs-6">{{ disciplina.tentativas }} tentativas</span>
+                                            <span class="badge bg-success fs-6">{{ disciplina.acertos }} acertos</span>
+                                            <span class="badge bg-warning fs-6">{{ disciplina.taxa_acerto }}%</span>
+                                            <span class="badge bg-primary fs-6">{{ disciplina.pontos }} pontos</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Barra de Progresso da Disciplina -->
+                                    <div class="progress mb-3" style="height: 25px;">
+                                        <div class="progress-bar 
+                                            {% if disciplina.taxa_acerto >= 90 %}bg-success
+                                            {% elif disciplina.taxa_acerto >= 70 %}bg-warning
+                                            {% else %}bg-danger{% endif %}" 
+                                             style="width: {{ disciplina.taxa_acerto }}%">
+                                            <strong>{{ disciplina.taxa_acerto }}%</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Matérias da Disciplina -->
+                                    {% if disciplina.materias %}
+                                        <div class="row">
+                                            {% for materia in disciplina.materias %}
+                                                <div class="col-md-6 col-lg-4 mb-3">
+                                                    <div class="card border-start border-4 
+                                                        {% if materia.tem_tentativas %}
+                                                            {% if materia.taxa_acerto >= 90 %}border-success
+                                                            {% elif materia.taxa_acerto >= 70 %}border-warning
+                                                            {% else %}border-danger{% endif %}
+                                                        {% else %}border-secondary{% endif %}">
+                                                        <div class="card-body">
+                                                            <h3 class="h6 text-dark mb-2">
+                                                                <i class="bi bi-journal-text"></i> {{ materia.materia_nome }}
+                                                                {% if not materia.tem_tentativas %}
+                                                                    <span class="badge bg-secondary ms-2">Disponível</span>
+                                                                {% endif %}
+                                                            </h3>
+                                                            {% if materia.tem_tentativas %}
+                                                                <div class="row text-center">
+                                                                    <div class="col-4">
+                                                                        <small class="text-muted">Tentativas</small>
+                                                                        <div class="fw-bold">{{ materia.tentativas }}</div>
+                                                                    </div>
+                                                                    <div class="col-4">
+                                                                        <small class="text-muted">Acertos</small>
+                                                                        <div class="fw-bold text-success">{{ materia.acertos }}</div>
+                                                                    </div>
+                                                                    <div class="col-4">
+                                                                        <small class="text-muted">Taxa</small>
+                                                                        <div class="fw-bold 
+                                                                            {% if materia.taxa_acerto >= 90 %}text-success
+                                                                            {% elif materia.taxa_acerto >= 70 %}text-warning
+                                                                            {% else %}text-danger{% endif %}">
+                                                                            {{ materia.taxa_acerto }}%
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="progress mt-2" style="height: 8px;">
+                                                                    <div class="progress-bar 
+                                                                        {% if materia.taxa_acerto >= 90 %}bg-success
+                                                                        {% elif materia.taxa_acerto >= 70 %}bg-warning
+                                                                        {% else %}bg-danger{% endif %}" 
+                                                                         style="width: {{ materia.taxa_acerto }}%">
+                                                                    </div>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="text-center text-muted py-2">
+                                                                    <small>Matéria disponível para estudo</small>
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle"></i> Nenhuma matéria encontrada para esta disciplina.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if not forloop.last %}
+                                    <hr class="my-4">
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <h4 class="mt-3">Nenhuma tentativa encontrada</h4>
+                                <p>Não há dados de tentativas no período selecionado.</p>
+                                <a href="{% url 'core:listar_questoes' %}" class="btn btn-primary">
+                                    <i class="bi bi-play-circle"></i> Começar a Estudar
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para os gráficos
+    const disciplinas = JSON.parse('{{ estatisticas_disciplinas|escapejs }}');
+    const evolucaoData = JSON.parse('{{ evolucao_data|escapejs }}');
+    const evolucaoAcertos = JSON.parse('{{ evolucao_acertos|escapejs }}');
+    const evolucaoTentativas = JSON.parse('{{ evolucao_tentativas|escapejs }}');
+    const materiasPerformance = JSON.parse('{{ materias_performance|escapejs }}');
+    
+    // Configuração padrão do Chart.js
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#6c757d';
+    
+    // 1. Gráfico de Performance por Disciplina (Barras Horizontais)
+    const ctx1 = document.getElementById('performanceDisciplinasChart');
+    if (ctx1 && disciplinas.length > 0) {
+        new Chart(ctx1.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: disciplinas.map(d => d.disciplina_nome),
+            datasets: [{
+                label: 'Taxa de Acerto (%)',
+                data: disciplinas.map(d => d.taxa_acerto),
+                backgroundColor: disciplinas.map(d => 
+                    d.taxa_acerto >= 90 ? '#28a745' : 
+                    d.taxa_acerto >= 70 ? '#ffc107' : '#dc3545'
+                ),
+                borderColor: disciplinas.map(d => 
+                    d.taxa_acerto >= 90 ? '#1e7e34' : 
+                    d.taxa_acerto >= 70 ? '#e0a800' : '#bd2130'
+                ),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const disciplina = disciplinas[context.dataIndex];
+                            return [
+                                `Tentativas: ${disciplina.tentativas}`,
+                                `Acertos: ${disciplina.acertos}`,
+                                `Pontos: ${disciplina.pontos}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    }
+    
+    // 2. Gráfico de Evolução Temporal
+    const ctx2 = document.getElementById('evolucaoTemporalChart');
+    if (ctx2 && {{ total_tentativas }} > 0) {
+        new Chart(ctx2.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: evolucaoData,
+            datasets: [{
+                label: 'Acertos',
+                data: evolucaoAcertos,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Tentativas',
+                data: evolucaoTentativas,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    }
+    
+    // 3. Gráfico de Acertos vs Erros (Empilhado)
+    const ctx3 = document.getElementById('acertosErrosChart');
+    if (ctx3 && disciplinas.length > 0) {
+        new Chart(ctx3.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: disciplinas.map(d => d.disciplina_nome),
+            datasets: [{
+                label: 'Acertos',
+                data: disciplinas.map(d => d.acertos),
+                backgroundColor: '#28a745',
+                borderColor: '#1e7e34',
+                borderWidth: 1
+            }, {
+                label: 'Erros',
+                data: disciplinas.map(d => d.erros),
+                backgroundColor: '#dc3545',
+                borderColor: '#bd2130',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    }
+    
+    // 4. Gráfico de Performance por Matéria
+    const ctx4 = document.getElementById('materiasChart');
+    if (ctx4 && materiasPerformance.length > 0) {
+        new Chart(ctx4.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: materiasPerformance.map(m => m.materia.length > 20 ? m.materia.substring(0, 20) + '...' : m.materia),
+            datasets: [{
+                label: 'Taxa de Acerto (%)',
+                data: materiasPerformance.map(m => m.taxa),
+                backgroundColor: materiasPerformance.map(m => 
+                    m.taxa >= 90 ? '#28a745' : 
+                    m.taxa >= 70 ? '#ffc107' : '#dc3545'
+                ),
+                borderColor: materiasPerformance.map(m => 
+                    m.taxa >= 90 ? '#1e7e34' : 
+                    m.taxa >= 70 ? '#e0a800' : '#bd2130'
+                ),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const materia = materiasPerformance[context.dataIndex];
+                            return [
+                                `Tentativas: ${materia.tentativas}`,
+                                `Acertos: ${materia.acertos}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    }
+});
+</script>
+{% endblock %}

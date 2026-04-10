@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Resolver Questão - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-question-circle"></i> Resolver Questão
+                    </h4>
+                    <div>
+                        <span class="badge bg-light text-dark me-2">{{ questao.disciplina.nome }}</span>
+                        <span class="badge bg-{% if questao.nivel_dificuldade == 'fixacao' %}success{% elif questao.nivel_dificuldade == 'medio' %}warning{% elif questao.nivel_dificuldade == 'dificil' %}danger{% else %}dark{% endif %}">
+                            {{ questao.get_nivel_dificuldade_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Enunciado:</h5>
+                    <p class="lead">{{ questao.enunciado }}</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="tempo_resposta" id="tempo_resposta" value="0" />
+                    
+                    <h5 class="mb-3">Alternativas:</h5>
+                    <div class="list-group">
+                        {% for letra, texto in alternativas_display.items %}
+                            <div class="list-group-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="resposta" id="alt_{{ letra }}" value="{{ letra }}">
+                                    <label class="form-check-label w-100" for="alt_{{ letra }}">
+                                        <strong>{{ letra }})</strong> {{ texto }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        {% if proxima_questao %}
+                            <a class="btn btn-outline-secondary me-md-2" href="{% url 'core:resolver_questao' proxima_questao.id %}">
+                                <i class="bi bi-skip-forward"></i> Pular Questão
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-check-circle"></i> Responder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Timer -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <small class="text-muted">
+                    <i class="bi bi-clock"></i> Tempo decorrido: <span id="timer">0s</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let start = Date.now();
+const input = document.getElementById('tempo_resposta');
+const timer = document.getElementById('timer');
+
+setInterval(() => {
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    input.value = elapsed;
+    timer.textContent = elapsed + 's';
+}, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ prova.titulo }} - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-file-text"></i> {{ prova.titulo }}</h2>
+            <div>
+                <a href="{% url 'core:listar_provas_antigas' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+                {% if not prova.processado %}
+                    <form method="post" action="{% url 'core:processar_prova_antiga' prova.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-gear"></i> Processar Prova
+                        </button>
+                    </form>
+                {% endif %}
+                <button type="button" class="btn btn-info" onclick="testarContabilidade({{ prova.id }})">
+                    <i class="bi bi-calculator"></i> Testar Contabilidade
+                </button>
+                <button type="button" class="btn btn-warning" onclick="detectarQuantidade({{ prova.id }})">
+                    <i class="bi bi-search"></i> Detectar Quantidade
+                </button>
+            </div>
+        </div>
+        
+        <!-- Informações Básicas -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-info-circle"></i> Informações da Prova
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Banca:</strong> {{ prova.get_banca_display }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Ano:</strong> {{ prova.ano }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Tipo:</strong> {{ prova.get_tipo_display }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-{% if prova.processado %}success{% else %}warning{% endif %}">
+                                        {% if prova.processado %}Processada{% else %}Pendente{% endif %}
+                                    </span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Upload:</strong> {{ prova.data_upload|date:"d/m/Y H:i" }}
+                                </div>
+                                {% if prova.data_processamento %}
+                                    <div class="mb-3">
+                                        <strong>Processamento:</strong> {{ prova.data_processamento|date:"d/m/Y H:i" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if prova.observacoes %}
+                            <div class="mt-3">
+                                <strong>Observações:</strong>
+                                <p class="text-muted">{{ prova.observacoes }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-download"></i> Arquivo
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-pdf fs-1 text-danger"></i>
+                        <p class="mt-2 mb-3">{{ prova.arquivo_pdf.name|slice:"15:" }}</p>
+                        <a href="{{ prova.arquivo_pdf.url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-download"></i> Baixar PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Análise da Prova -->
+        {% if prova.processado %}
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-graph-up"></i> Disciplinas Identificadas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if prova.disciplinas_identificadas %}
+                                <div class="row">
+                                    {% for disciplina, count in prova.disciplinas_identificadas.items %}
+                                        <div class="col-6 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>{{ disciplina }}</span>
+                                                <span class="badge bg-primary">{{ count }} questões</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">Nenhuma disciplina identificada ainda.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-bar-chart"></i> Estatísticas
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 text-primary">{{ prova.total_questoes }}</div>
+                                    <small class="text-muted">Total de Questões</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-success">{{ prova.get_disciplinas_count }}</div>
+                                    <small class="text-muted">Disciplinas</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-info">{{ prova.ano }}</div>
+                                    <small class="text-muted">Ano</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Padrões de Recorrência -->
+            {% if prova.padroes_recorrencia %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-search"></i> Padrões de Recorrência Identificados
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-lightbulb"></i>
+                                    <strong>Análise Automática:</strong> A IA identificou os seguintes padrões nesta prova que serão usados para melhorar a geração de questões futuras.
+                                </div>
+                                <!-- Aqui seria exibida a análise de padrões -->
+                                <p class="text-muted">Análise de padrões em desenvolvimento...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Prova não processada:</strong> Esta prova ainda não foi processada. Clique em "Processar Prova" para extrair o conteúdo e identificar padrões.
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Conteúdo Extraído (se disponível) -->
+        {% if prova.conteudo_texto %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-file-text"></i> Conteúdo Extraído
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Conteúdo extraído do PDF:</strong> Este é o texto bruto extraído do arquivo PDF para análise.
+                            </div>
+                            <div style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                                <pre class="mb-0" style="white-space: pre-wrap; font-size: 12px;">{{ prova.conteudo_texto|truncatewords:500 }}</pre>
+                            </div>
+                            {% if prova.conteudo_texto|length > 500 %}
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">Mostrando primeiras 500 palavras...</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function testarContabilidade(provaId) {
+    // Mostra loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Analisando...';
+    btn.disabled = true;
+    
+    // Faz a chamada AJAX
+    fetch(`/testar-contabilidade/${provaId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostra o resultado no console
+                console.log('=== ANÁLISE DETALHADA DE CONTABILIDADE ===');
+                console.log('Prova:', data.resultado.quantidade_informada);
+                console.log('Total Contabilizado:', data.resultado.total_contabilizado);
+                console.log('Diferença:', data.resultado.diferenca);
+                console.log('Relatório por Disciplina:', data.resultado.relatorio_por_disciplina);
+                
+                // Mostra alerta com resumo
+                alert(`Análise Concluída!\n\nTotal Informado: ${data.resultado.quantidade_informada}\nTotal Contabilizado: ${data.resultado.total_contabilizado}\nDiferença: ${data.resultado.diferenca}\n\nVerifique o console para detalhes completos.`);
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao executar análise: ' + error.message);
+        })
+        .finally(() => {
+            // Restaura o botão
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function detectarQuantidade(provaId) {
+    // Mostra loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Detectando...';
+    btn.disabled = true;
+    
+    // Faz a chamada AJAX
+    fetch(`/detectar-quantidade/${provaId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostra o resultado no console
+                console.log('=== DETECÇÃO INTELIGENTE DE QUANTIDADE ===');
+                console.log('Quantidade Estimada:', data.resultado.quantidade_estimada);
+                console.log('Sequência de Questões:', data.resultado.sequencia_questoes);
+                console.log('Padrões de Texto:', data.resultado.padroes_texto);
+                console.log('Análise por Disciplina:', data.resultado.analise_disciplinas);
+                console.log('Números no Início das Linhas:', data.resultado.numeros_inicio_linha);
+                console.log('Candidatos:', data.resultado.candidatos);
+                console.log('Candidatos Válidos:', data.resultado.candidatos_validos);
+                
+                // Mostra alerta com resumo
+                alert(`Detecção Concluída!\n\nQuantidade Estimada: ${data.resultado.quantidade_estimada}\n\nSequência: ${data.resultado.sequencia_questoes}\nNúmeros Início: ${data.resultado.numeros_inicio_linha}\n\nVerifique o console para detalhes completos.`);
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao executar detecção: ' + error.message);
+        })
+        .finally(() => {
+            // Restaura o botão
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+</script>
+{% endblock %}

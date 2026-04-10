@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload de Prova Antiga - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-upload"></i> Upload de Prova Antiga
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                    {{ form.titulo.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.titulo }}
+                                {% if form.titulo.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.titulo.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Ex: Prova IDECAN 2024 - Concurso Bombeiros</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.ano.id_for_label }}" class="form-label">
+                                    {{ form.ano.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.ano }}
+                                {% if form.ano.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.ano.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.banca.id_for_label }}" class="form-label">
+                                    {{ form.banca.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.banca }}
+                                {% if form.banca.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.banca.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                                    {{ form.tipo.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.tipo }}
+                                {% if form.tipo.errors %}
+                                    <div class="text-danger small">
+                                        {% for error in form.tipo.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.arquivo_pdf.id_for_label }}" class="form-label">
+                            {{ form.arquivo_pdf.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.arquivo_pdf }}
+                        {% if form.arquivo_pdf.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.arquivo_pdf.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> 
+                            Apenas arquivos PDF. Tamanho máximo: 50MB
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.observacoes.id_for_label }}" class="form-label">
+                            {{ form.observacoes.label }}
+                        </label>
+                        {{ form.observacoes }}
+                        {% if form.observacoes.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.observacoes.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Dica:</strong> Após o upload, a prova será processada automaticamente para extrair o conteúdo e identificar padrões da banca.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'core:listar_provas_antigas' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Enviar Prova
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

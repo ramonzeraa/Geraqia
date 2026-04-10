@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Questões - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-list-ul"></i> Questões Geradas</h2>
+            <div>
+                <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Enviar PDF
+                </a>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-funnel"></i> Filtros
+                </h5>
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Disciplina</label>
+                        {{ form.disciplina }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Matéria</label>
+                        {{ form.materia }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Nível</label>
+                        {{ form.nivel_dificuldade }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo</label>
+                        {{ form.tipo }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Buscar</label>
+                        {{ form.busca }}
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="col-md-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" name="mostrar_respondidas" 
+                                   id="mostrar_respondidas" value="true" 
+                                   {% if mostrar_respondidas %}checked{% endif %}>
+                            <label class="form-check-label" for="mostrar_respondidas">
+                                Mostrar questões respondidas
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="col-12">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                        <a href="{% url 'core:listar_questoes' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Limpar
+                        </a>
+                        {% if user.is_authenticated %}
+                        <span class="badge bg-info ms-2">
+                            <i class="bi bi-question-circle"></i> {{ total_nao_respondidas }} não respondidas
+                        </span>
+                        <span class="badge bg-success ms-1">
+                            <i class="bi bi-check-circle"></i> {{ total_respondidas }} respondidas
+                        </span>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Questões -->
+        <div class="card">
+            <div class="card-body">
+                {% if questoes %}
+                    <div class="list-group list-group-flush">
+                        {% for q in questoes %}
+                        <a class="list-group-item list-group-item-action {% if q.id in questoes_respondidas_ids %}opacity-75{% endif %}" 
+                           href="{% if q.tipo in 'afirmacoes,afirmacoes_variadas,verdadeiro_falso' %}{% url 'core:resolver_questao_afirmacoes' q.id %}{% else %}{% url 'core:resolver_questao' q.id %}{% endif %}">
+                                
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-primary me-2">{{ q.disciplina.nome }}</span>
+                                            <span class="badge bg-{% if q.nivel_dificuldade == 'fixacao' %}success{% elif q.nivel_dificuldade == 'medio' %}warning{% elif q.nivel_dificuldade == 'dificil' %}danger{% else %}dark{% endif %} me-2">
+                                                {{ q.get_nivel_dificuldade_display }}
+                                            </span>
+                                            <span class="badge bg-secondary me-2">{{ q.get_tipo_display }}</span>
+                                            
+                                            {% if q.id in questoes_respondidas_ids %}
+                                                <span class="badge bg-success me-2">
+                                                    <i class="bi bi-check-circle"></i> Respondida
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <h6 class="mb-1 {% if q.id in questoes_respondidas_ids %}text-muted{% endif %}">
+                                            {% if q.tipo in 'afirmacoes,afirmacoes_variadas,verdadeiro_falso' %}
+                                                {{ q.enunciado|truncatechars:300 }}
+                                            {% else %}
+                                                {{ q.enunciado|truncatechars:200 }}
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> {{ q.data_criacao|date:'d/m/Y H:i' }}
+                                            {% if q.total_tentativas > 0 %}
+                                                • <i class="bi bi-graph-up"></i> {{ q.taxa_acerto }}% de acerto
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="text-end">
+                                        {% if q.id in questoes_respondidas_ids %}
+                                            <i class="bi bi-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-arrow-right text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">Nenhuma questão encontrada</h4>
+                        <p>Que tal gerar algumas questões a partir de um PDF?</p>
+                        <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Enviar PDF
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        {% if page_obj.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.disciplina %}&disciplina={{ request.GET.disciplina }}{% endif %}{% if request.GET.nivel_dificuldade %}&nivel_dificuldade={{ request.GET.nivel_dificuldade }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i> Anterior
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.disciplina %}&disciplina={{ request.GET.disciplina }}{% endif %}{% if request.GET.nivel_dificuldade %}&nivel_dificuldade={{ request.GET.nivel_dificuldade }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}">
+                                Próxima <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplinaSelect = document.getElementById('id_disciplina_filtro');
+    const materiaSelect = document.getElementById('id_materia_filtro');
+    
+    if (disciplinaSelect && materiaSelect) {
+        disciplinaSelect.addEventListener('change', function() {
+            const disciplinaId = this.value;
+            
+            // Limpa o campo matéria
+            materiaSelect.innerHTML = '<option value="">Todas as matérias</option>';
+            
+            if (disciplinaId) {
+                // Busca matérias via AJAX
+                fetch(`/ajax/buscar-materias/?disciplina_id=${disciplinaId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(materia => {
+                            const option = document.createElement('option');
+                            option.value = materia.nome; // Usa o nome da matéria como valor
+                            option.textContent = materia.nome;
+                            materiaSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar matérias:', error);
+                    });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

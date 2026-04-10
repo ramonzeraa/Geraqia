@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Enviar PDF - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-upload"></i> Enviar PDF para Geração de Questões
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Faça upload de um PDF e configure a disciplina e matéria para gerar questões personalizadas.
+                </p>
+                
+                <!-- Mensagens -->
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'info' %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="bi bi-info-circle"></i> {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% elif message.tags == 'success' %}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="bi bi-check-circle"></i> {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                <i class="bi bi-tag"></i> {{ form.titulo.label }}
+                            </label>
+                            {{ form.titulo }}
+                            {% if form.titulo.errors %}
+                                <div class="text-danger">{{ form.titulo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.disciplina.id_for_label }}" class="form-label">
+                                <i class="bi bi-book"></i> {{ form.disciplina.label }}
+                            </label>
+                            {{ form.disciplina }}
+                            {% if form.disciplina.errors %}
+                                <div class="text-danger">{{ form.disciplina.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.materia.id_for_label }}" class="form-label">
+                                <i class="bi bi-journal-text"></i> {{ form.materia.label }}
+                            </label>
+                            {{ form.materia }}
+                            {% if form.materia.errors %}
+                                <div class="text-danger">{{ form.materia.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Digite o nome da matéria/assunto do PDF.</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.arquivo.id_for_label }}" class="form-label">
+                                <i class="bi bi-file-pdf"></i> {{ form.arquivo.label }}
+                            </label>
+                            {{ form.arquivo }}
+                            {% if form.arquivo.errors %}
+                                <div class="text-danger">{{ form.arquivo.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Arquivos PDF até 10MB são aceitos.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'core:home' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-upload"></i> Processar PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações sobre o processo -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Como funciona?
+                </h5>
+                <ol class="mb-0">
+                    <li>O sistema verifica se o PDF já existe (detecção por hash SHA-256)</li>
+                    <li>Se for duplicata, reutiliza o conteúdo já processado</li>
+                    <li>Se for novo, extrai o texto automaticamente</li>
+                    <li>Você será redirecionado para a página de geração de questões</li>
+                    <li>Escolha o nível de dificuldade e quantidade de questões desejadas</li>
+                    <li>As questões serão geradas usando IA no padrão IDECAN</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Benefícios da detecção de duplicatas -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-lightbulb text-warning"></i> Sistema Inteligente de Duplicatas
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">Benefícios:</h6>
+                        <ul class="mb-0">
+                            <li>Economia de tokens da API</li>
+                            <li>Processamento mais rápido</li>
+                            <li>Reutilização de conteúdo</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Funcionamento:</h6>
+                        <ul class="mb-0">
+                            <li>Detecção automática por hash</li>
+                            <li>Mensagem informativa</li>
+                            <li>Conteúdo reutilizado</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'core:pdfs_duplicados' %}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-files"></i> Ver PDFs Duplicados
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

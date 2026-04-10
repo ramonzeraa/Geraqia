@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Provas Antigas - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-archive"></i> Provas Antigas</h2>
+            <a href="{% url 'core:upload_prova_antiga' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nova Prova
+            </a>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Banca</label>
+                        <select name="banca" class="form-select">
+                            <option value="">Todas as bancas</option>
+                            {% for value, label in bancas %}
+                                <option value="{{ value }}" {% if request.GET.banca == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo" class="form-select">
+                            <option value="">Todos os tipos</option>
+                            {% for value, label in tipos %}
+                                <option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ano</label>
+                        <select name="ano" class="form-select">
+                            <option value="">Todos os anos</option>
+                            {% for ano in anos %}
+                                <option value="{{ ano }}" {% if request.GET.ano == ano|stringformat:"s" %}selected{% endif %}>
+                                    {{ ano }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                        <a href="{% url 'core:listar_provas_antigas' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Resetar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Provas -->
+        <div class="row">
+            {% for prova in provas %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">{{ prova.titulo }}</h5>
+                            <span class="badge bg-{% if prova.processado %}success{% else %}warning{% endif %}">
+                                {% if prova.processado %}Processada{% else %}Pendente{% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Banca</small>
+                                    <div class="fw-bold">{{ prova.get_banca_display }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Ano</small>
+                                    <div class="fw-bold">{{ prova.ano }}</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Tipo</small>
+                                    <div class="fw-bold">{{ prova.get_tipo_display }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Disciplinas</small>
+                                    <div class="fw-bold">{{ prova.get_disciplinas_count }}</div>
+                                </div>
+                            </div>
+                            {% if prova.observacoes %}
+                                <p class="card-text text-muted small">{{ prova.observacoes|truncatewords:20 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    {{ prova.data_upload|date:"d/m/Y H:i" }}
+                                </small>
+                                <div>
+                                    <a href="{% url 'core:detalhar_prova_antiga' prova.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+                                    {% if not prova.processado %}
+                                        <a href="{% url 'core:processar_prova_antiga' prova.id %}" class="btn btn-sm btn-success">
+                                            <i class="bi bi-gear"></i> Processar
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-archive fs-1"></i>
+                        <h4 class="mt-3">Nenhuma prova encontrada</h4>
+                        <p>Comece enviando suas provas antigas para análise!</p>
+                        <a href="{% url 'core:upload_prova_antiga' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Enviar Primeira Prova
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% if provas.has_other_pages %}
+            <nav aria-label="Paginação das provas">
+                <ul class="pagination justify-content-center">
+                    {% if provas.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.banca %}&banca={{ request.GET.banca }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.ano %}&ano={{ request.GET.ano }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ provas.previous_page_number }}{% if request.GET.banca %}&banca={{ request.GET.banca }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.ano %}&ano={{ request.GET.ano }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Página {{ provas.number }} de {{ provas.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if provas.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ provas.next_page_number }}{% if request.GET.banca %}&banca={{ request.GET.banca }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.ano %}&ano={{ request.GET.ano }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ provas.paginator.num_pages }}{% if request.GET.banca %}&banca={{ request.GET.banca }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.ano %}&ano={{ request.GET.ano }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}PDFs Duplicados - Questões IA{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-files"></i> PDFs Duplicados</h2>
+            <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                <i class="bi bi-upload"></i> Enviar PDF
+            </a>
+        </div>
+        
+        {% if grupos_duplicados %}
+            <div class="alert alert-info">
+                <h5 class="alert-heading">
+                    <i class="bi bi-info-circle"></i> Sistema de Detecção de Duplicatas
+                </h5>
+                <p class="mb-0">
+                    O sistema detecta automaticamente PDFs duplicados usando hash SHA-256. 
+                    Quando você enviar um PDF que já existe, o conteúdo será reutilizado para economizar processamento.
+                </p>
+            </div>
+            
+            <p class="text-muted mb-4">
+                <strong>{{ total_duplicados }}</strong> grupos de PDFs duplicados encontrados.
+            </p>
+            
+            {% for grupo in grupos_duplicados %}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-files"></i> Grupo de Duplicatas ({{ grupo.total }} arquivos)
+                        </h5>
+                        <small>Hash: {{ grupo.hash|truncatechars:16 }}...</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Disciplina</th>
+                                        <th>Matéria</th>
+                                        <th>Usuário</th>
+                                        <th>Data Upload</th>
+                                        <th>Tamanho</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pdf in grupo.pdfs %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ pdf.titulo }}</strong>
+                                                {% if pdf.id == grupo.pdfs.first.id %}
+                                                    <span class="badge bg-success ms-1">Original</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning ms-1">Duplicata</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pdf.disciplina %}
+                                                    <span class="badge bg-primary">{{ pdf.disciplina.nome }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ pdf.materia|default:"-" }}</td>
+                                            <td>{{ pdf.usuario.username }}</td>
+                                            <td>{{ pdf.data_upload|date:"d/m/Y H:i" }}</td>
+                                            <td>
+                                                {% if pdf.tamanho_arquivo %}
+                                                    {{ pdf.tamanho_arquivo|filesizeformat }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pdf.processado %}
+                                                    <span class="badge bg-success">Processado</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Pendente</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6>Benefícios da Detecção de Duplicatas:</h6>
+                            <ul class="mb-0">
+                                <li><i class="bi bi-check-circle text-success"></i> Economia de tokens da API Gemini</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Processamento mais rápido</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Reutilização de conteúdo já extraído</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Menor uso de armazenamento</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-files" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Nenhum PDF duplicado encontrado</h4>
+                <p>O sistema ainda não detectou PDFs duplicados.</p>
+                <a href="{% url 'core:upload_pdf' %}" class="btn btn-primary">
+                    <i class="bi bi-upload"></i> Enviar Primeiro PDF
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
